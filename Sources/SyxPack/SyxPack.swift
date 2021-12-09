@@ -155,6 +155,9 @@ public func identifyMessage(data: [UInt8]) {
         return
     }
     
+    let terminatorOffset = data.count - 1
+    var payloadOffset = 2
+    
     switch data[1] {
     case 0x7E:
         print("Universal Non-Realtime System Exclusive message")
@@ -168,10 +171,14 @@ public func identifyMessage(data: [UInt8]) {
                 data[2], data[3], data[4]
             ]
             print("Extended, \(manufacturerId.hexDump())")
+            payloadOffset += 2
         case 0x7D:
             print("Development ")
         default:
             print("Standard, \(String(format: "%02X", data[1]))")
         }
     }
+    
+    let payloadLength = terminatorOffset - payloadOffset
+    print("Payload: \(payloadLength) bytes")
 }
