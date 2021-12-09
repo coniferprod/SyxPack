@@ -23,7 +23,12 @@ final class SyxPackTests: XCTestCase {
 
     func test_sourceCodeIsGeneratedCorrectly() {
         let data: ByteArray = [0x41, 0x42, 0x43]
-        let config = SourceDumpConfig(bytesPerLine: 8, uppercased: true, variableName: "data", typeName: "ByteArray", indent: 4)
+        let config = SourceDumpConfig(
+            bytesPerLine: 8,
+            uppercased: true,
+            variableName: "data",
+            typeName: "ByteArray",
+            indent: 4)
         let dump = data.sourceDump(config: config)
         XCTAssertEqual(dump, "let data: ByteArray = [\n    0x41, 0x42, 0x43, \n]")
     }
