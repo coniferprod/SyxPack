@@ -145,22 +145,27 @@ public func identifyMessage(data: [UInt8]) {
         return
     }
     
+    guard data[0] == 0xF0 else {
+        print("Not initiated by F0H")
+        return
+    }
+    
     guard data.last == 0xF7 else {
         print("Not terminated by F7H")
         return
     }
     
-    switch data[0] {
+    switch data[1] {
     case 0x7E:
         print("Universal Non-Realtime System Exclusive message")
     case 0x7F:
         print("Universal Realtime System Exclusive message")
-    case 0xF0:
+    default:
         print("Manufacturer ID:", separator: " ")
-        switch data[1] {
+        switch data[2] {
         case 0x00:
             let manufacturerId: ByteArray = [
-                data[1], data[2], data[3]
+                data[2], data[3], data[4]
             ]
             print("Extended, \(manufacturerId.hexDump())")
         case 0x7D:
@@ -168,8 +173,5 @@ public func identifyMessage(data: [UInt8]) {
         default:
             print("Standard, \(String(format: "%02X", data[1]))")
         }
-    default:
-        print("Not a valid System Exclusive message")
-        print("First byte is \(String(format: "%02X", data[0]))")
     }
 }
