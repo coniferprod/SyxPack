@@ -164,13 +164,17 @@ public func identifyMessage(data: [UInt8]) {
     case 0x7F:
         print("Universal Realtime System Exclusive message")
     default:
+        print("Manufacturer specific System Exclusive message")
         print("Manufacturer ID:", separator: " ")
         switch data[2] {
         case 0x00:
             let manufacturerId: ByteArray = [
                 data[2], data[3], data[4]
             ]
-            print("Extended, \(manufacturerId.hexDump())")
+            let simpleConfig = HexDumpConfig(
+                bytesPerLine: 8, uppercased: true,
+                includeOptions: [], indent: 0)
+            print("Extended, \(manufacturerId.hexDump(config: simpleConfig))")
             payloadOffset += 2
         case 0x7D:
             print("Development ")
