@@ -157,7 +157,10 @@ public func identifyMessage(data: [UInt8]) {
     
     let terminatorOffset = data.count - 1
     var payloadOffset = 2
-    
+    let simpleHexDumpConfig = HexDumpConfig(
+        bytesPerLine: 8, uppercased: true,
+        includeOptions: [], indent: 0)
+
     switch data[1] {
     case 0x7E:
         print("Universal Non-Realtime System Exclusive message")
@@ -170,10 +173,7 @@ public func identifyMessage(data: [UInt8]) {
         let manufacturerId: ByteArray = [
             data[1], data[2], data[3]
         ]
-        let simpleConfig = HexDumpConfig(
-            bytesPerLine: 8, uppercased: true,
-            includeOptions: [], indent: 0)
-        print("Manufacturer ID: Extended, \(manufacturerId.hexDump(config: simpleConfig))")
+        print("Manufacturer ID: Extended, \(manufacturerId.hexDump(config: simpleHexDumpConfig))")
         payloadOffset += 2
     default:
         print("Manufacturer-specific System Exclusive message")
@@ -182,4 +182,5 @@ public func identifyMessage(data: [UInt8]) {
     
     let payloadLength = terminatorOffset - payloadOffset
     print("Payload: \(payloadLength) bytes")
+    print(ByteArray(data[payloadOffset..<terminatorOffset]).hexDump(config: simpleHexDumpConfig))
 }
