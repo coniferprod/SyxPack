@@ -6,7 +6,7 @@ public typealias ByteTriplet = (Byte, Byte, Byte)
 
 
 extension Data {
-    var bytes: ByteArray {
+    public var bytes: ByteArray {
         var byteArray = ByteArray(repeating: 0, count: self.count)
         self.copyBytes(to: &byteArray, count: self.count)
         return byteArray
@@ -35,8 +35,13 @@ public struct HexDumpConfig {
         bytesPerLine: 16,
         uppercased: true,
         includeOptions: [.offset, .printableCharacters, .midChunkGap],
-        indent: 0
-    )
+        indent: 0)
+    
+    public static let plainConfig = HexDumpConfig(
+        bytesPerLine: 16,
+        uppercased: true,
+        includeOptions: [],
+        indent: 0)
 }
 
 public struct SourceDumpConfig {
