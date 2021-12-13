@@ -350,3 +350,36 @@ extension Message {
     }
 }
 
+extension Message: CustomStringConvertible {
+    public var description: String {
+        var lines = [String]()
+        
+        switch self {
+        case .universal(let kind, let header, let payload):
+            var line = "Universal "
+            switch kind {
+            case .nonRealTime:
+                line.append("Non-Real-time")
+            case .realTime:
+                line.append("Real-time")
+            }
+            line.append(" System Exclusive message")
+            lines.append(line)
+            
+            lines.append("Device Ch: \(header.deviceChannel)")
+            lines.append("Sub-ID #1: \(String(format: "%02X", header.subId1))")
+            lines.append("Sub-ID #2: \(String(format: "%02X", header.subId2))")
+            lines.append("Payload: \(payload.count) bytes")
+            
+        case .manufacturer(let id, let payload):
+            lines.append("Manufacturer-specific System Exclusive message")
+            
+            let manufacturer = Manufacturer(identifier: id)
+            lines.append("Manufacturer:\n\(manufacturer)")
+            
+            lines.append("Payload   : \(payload.count) bytes")
+        }
+        
+        return lines.joined(separator: "\n")
+    }
+}
