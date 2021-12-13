@@ -13,21 +13,25 @@ extension Data {
     }
 }
 
-struct HexDumpConfig {
-    struct IncludeOptions: OptionSet {
-        let rawValue: UInt8
+public struct HexDumpConfig {
+    public struct IncludeOptions: OptionSet {
+        public let rawValue: UInt8
 
-        static let offset = IncludeOptions(rawValue: 1)
-        static let printableCharacters = IncludeOptions(rawValue: 1 << 1)
-        static let midChunkGap = IncludeOptions(rawValue: 1 << 2)
+        public static let offset = IncludeOptions(rawValue: 1)
+        public static let printableCharacters = IncludeOptions(rawValue: 1 << 1)
+        public static let midChunkGap = IncludeOptions(rawValue: 1 << 2)
+        
+        public init(rawValue: UInt8) {
+            self.rawValue = rawValue
+        }
     }
     
-    var bytesPerLine: Int
-    var uppercased: Bool
-    var includeOptions: IncludeOptions
-    var indent: Int
+    public var bytesPerLine: Int
+    public var uppercased: Bool
+    public var includeOptions: IncludeOptions
+    public var indent: Int
     
-    static let defaultConfig = HexDumpConfig(
+    public static let defaultConfig = HexDumpConfig(
         bytesPerLine: 16,
         uppercased: true,
         includeOptions: [.offset, .printableCharacters, .midChunkGap],
@@ -35,14 +39,14 @@ struct HexDumpConfig {
     )
 }
 
-struct SourceDumpConfig {
-    var bytesPerLine: Int
-    var uppercased: Bool
-    var variableName: String
-    var typeName: String
-    var indent: Int
+public struct SourceDumpConfig {
+    public var bytesPerLine: Int
+    public var uppercased: Bool
+    public var variableName: String
+    public var typeName: String
+    public var indent: Int
     
-    static let defaultConfig = SourceDumpConfig(
+    public static let defaultConfig = SourceDumpConfig(
         bytesPerLine: 16,
         uppercased: true,
         variableName: "data",
@@ -71,7 +75,7 @@ extension Character {
 }
 
 extension ByteArray {
-    func hexDump(config: HexDumpConfig = .defaultConfig) -> String {
+    public func hexDump(config: HexDumpConfig = .defaultConfig) -> String {
         var lines = [String]()
 
         let chunks = self.chunked(into: config.bytesPerLine)
