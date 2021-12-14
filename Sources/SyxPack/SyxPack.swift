@@ -151,12 +151,12 @@ extension ByteArray {
 }
 
 public func identifyMessage(data: [UInt8]) {
-    guard data.count >= 4 else {
+    guard data.count >= 5 else {
         print("Too few bytes for a System Exclusive message")
         return
     }
     
-    guard data[0] == 0xF0 else {
+    guard data.first == 0xF0 else {
         print("Not initiated by F0H")
         return
     }
@@ -193,17 +193,35 @@ public func identifyMessage(data: [UInt8]) {
     
     let payloadLength = terminatorOffset - payloadOffset
     print("Payload: \(payloadLength) bytes")
-    print(ByteArray(data[payloadOffset..<terminatorOffset]).hexDump(config: simpleHexDumpConfig))
+    let bytesToPrint = min(16, payloadLength)
+    print(ByteArray(data[..<bytesToPrint]).hexDump(config: simpleHexDumpConfig))
+    if bytesToPrint < payloadLength {
+        print(" (+ \(payloadLength - bytesToPrint) more bytes)")
+    }
 }
 
 public struct Manufacturer {
-    public enum Identifier {
+    public enum Identifier { /*: Equatable {
+        public static func == (lhs: Manufacturer.Identifier, rhs: Manufacturer.Identifier) -> Bool {
+            switch (lhs, rhs) {
+            case (let .standard(lhsByte), let .standard(rhsByte)):
+                return lhsByte == rhsByte
+            case (let .extended(lhsByteTriplet), let .extended(rhsByteTriplet)):
+                return lhsByteTriplet.0 == rhsByteTriplet.0 &&
+                       lhsByteTriplet.1 == rhsByteTriplet.1 &&
+                       lhsByteTriplet.2 == rhsByteTriplet.2
+            default:
+                return lhs == rhs
+            }
+        }
+        */
+    
         case standard(Byte)
         case extended(ByteTriplet)
         case development
     }
 
-    public enum Group {
+    public enum Group: Equatable {
         case unknown
         case american
         case europeanOrOther
@@ -300,13 +318,18 @@ extension Manufacturer: CustomStringConvertible {
     }
 }
 
-public enum Universal {
+public enum Universal: Equatable {
     public enum Kind {
         case nonRealTime
         case realTime
     }
     
-    public typealias Header = (deviceChannel: Byte, subId1: Byte, subId2: Byte)
+    public struct Header {
+        let deviceChannel: Byte
+        let subId1: Byte
+        let subId2: Byte
+    }
+    //public typealias Header = (deviceChannel: Byte, subId1: Byte, subId2: Byte)
 }
 
 public typealias Payload = ByteArray
@@ -318,34 +341,38 @@ public enum Message {
 
 extension Message {
     public init?(data: ByteArray) {
-        guard data.count >= 4 else {
+        func getPayload(startIndex: Int = 2) -> Payload {
+            let endIndex = data.count - 1
+            return Payload(data[startIndex..<endIndex])
+        }
+        
+        func getHeader() -> Universal.Header {
+            return Universal.Header(deviceChannel: data[2], subId1: data[3], subId2: data[4])
+        }
+        
+        guard data.count >= 5 else {
+            return nil
+        }
+        guard data.first == 0xF0 else {
             return nil
         }
         guard data.last == 0xF7 else {
             return nil
         }
-        let lastByteIndex = data.count - 1  // for dropping the SysEx terminator
         
-        // Initialize the Universal SysEx message fields in advance, in case they are needed
-        let header: Universal.Header = (deviceChannel: data[1], subId1: data[2], subId2: data[3])
-        let payload = Payload(data[4..<lastByteIndex])
+        //let header: Universal.Header = (deviceChannel: data[2], subId1: data[3], subId2: data[4])
         
-        switch data[0] {
+        switch data[1] {
+        case 0x7D:
+            self = .manufacturer(.development, getPayload())
         case 0x7E:
-            self = .universal(.nonRealTime, header, payload)
+            self = .universal(.nonRealTime, getHeader(), getPayload(startIndex: 4))
         case 0x7F:
-            self = .universal(.realTime, header, payload)
-        case 0xF0:
-            switch data[1] {
-            case 0x00:
-                self = .manufacturer(.extended((data[1], data[2], data[3])), payload)
-            case 0x7D:
-                self = .manufacturer(.development, Payload(data[2..<lastByteIndex]))
-            default:
-                self = .manufacturer(.standard(data[1]), Payload(data[2..<lastByteIndex]))
-            }
+            self = .universal(.realTime, getHeader(), getPayload(startIndex: 4))
+        case 0x00:
+            self = .manufacturer(.extended((data[1], data[2], data[3])), getPayload(startIndex: 4))
         default:
-            return nil
+            self = .manufacturer(.standard(data[1]), getPayload())
         }
     }
     
@@ -358,6 +385,19 @@ extension Message {
         }
     }
 }
+
+/*
+extension Message: Equatable {
+    public static func == (lhs: Message, rhs: Message) -> Bool {
+        switch lhs {
+        case .universal(let kind, let header, let payload):
+            return kind == rhs.
+        case .manufacturer(let identifier, let payload):
+            return true
+        }
+    }
+}
+*/
 
 extension Message: CustomStringConvertible {
     public var description: String {
