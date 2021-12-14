@@ -13,6 +13,20 @@ extension Data {
     }
 }
 
+extension Byte {
+    public mutating func setBit(_ position: Int) {
+        self |= 1 << position
+    }
+
+    public mutating func unsetBit(_ position: Int) {
+        self &= ~(1 << position)
+    }
+
+    public func isBitSet(_ position: Int) -> Bool {
+        return (self & (1 << position)) != 0
+    }
+}
+
 public struct HexDumpConfig {
     public struct IncludeOptions: OptionSet {
         public let rawValue: UInt8
@@ -61,7 +75,7 @@ public struct SourceDumpConfig {
 }
 
 extension Array {
-    func chunked(into size: Int) -> [[Element]] {
+    public func chunked(into size: Int) -> [[Element]] {
         return stride(from: 0, to: count, by: size).map {
             Array(self[$0 ..< Swift.min($0 + size, count)])
         }
@@ -429,5 +443,70 @@ extension Message: CustomStringConvertible {
         }
         
         return lines.joined(separator: "\n")
+    }
+}
+
+extension ByteArray {
+    public func unpacked() -> ByteArray {
+        func unpackChunk(data: ByteArray) -> ByteArray {
+            let indexByte = data.first!
+            let dataBytes = data.suffix(from: 1)
+
+            var result = ByteArray()
+
+            for (index, value) in dataBytes.enumerated() {
+                var b: Byte = value
+                if indexByte.isBitSet(index) {
+                    b.setBit(7)
+                }
+                result.append(b)
+            }
+
+            return result
+        }
+
+        let chunkSize = 8
+        let chunks = self.chunked(into: chunkSize)
+        
+        var result = ByteArray()
+        chunks.forEach { chunk in
+            result.append(contentsOf: unpackChunk(data: chunk))
+        }
+
+        return result
+    }
+    
+    public func packed() -> ByteArray {
+        func makeIndexByte(buf: ByteArray) -> Byte {
+            var bits = [Bool]()
+            buf.forEach {
+                bits.append($0.isBitSet(7))
+            }
+            var result: Byte = 0
+            for (index, bit) in bits.enumerated() {
+                if bit {
+                    result.setBit(index)
+                }
+            }
+            return result
+        }
+
+        func packChunk(data: ByteArray) -> ByteArray {
+            var d = ByteArray()
+            d.append(makeIndexByte(buf: data))
+            data.forEach { b in
+                d.append(b & 0x7f)
+            }
+            return d
+        }
+
+        let chunkSize = 7
+        let chunks = self.chunked(into: chunkSize)
+        var result = ByteArray()
+        chunks.forEach { chunk in
+            result.append(contentsOf: packChunk(data: chunk))
+        }
+
+        return result
     }
 }
