@@ -167,7 +167,7 @@ public func identifyMessage(data: [UInt8]) {
     }
     
     let terminatorOffset = data.count - 1
-    var payloadOffset = 2
+    var payloadStartOffset = 2
     let simpleHexDumpConfig = HexDumpConfig(
         bytesPerLine: 8, uppercased: true,
         includeOptions: [], indent: 0)
@@ -183,17 +183,17 @@ public func identifyMessage(data: [UInt8]) {
         print("Manufacturer-specific System Exclusive message")
         let manufacturer = Manufacturer(identifier: .extended((data[1], data[2], data[3])))
         print("Manufacturer:\n\(manufacturer)")
-        payloadOffset += 2
+        payloadStartOffset += 2
     default:
         print("Manufacturer-specific System Exclusive message")
         let manufacturer = Manufacturer(identifier: .standard(data[1]))
         print("Manufacturer:\n\(manufacturer)")
     }
 
-    let payloadLength = terminatorOffset - payloadOffset
+    let payloadLength = terminatorOffset - payloadStartOffset
     print("Payload: \(payloadLength) bytes")
     let bytesToPrint = min(16, payloadLength)
-    print(ByteArray(data[..<bytesToPrint]).hexDump(config: simpleHexDumpConfig))
+    print(ByteArray(data[payloadStartOffset ..< payloadStartOffset + bytesToPrint]).hexDump(config: simpleHexDumpConfig))
     if bytesToPrint < payloadLength {
         print(" (+ \(payloadLength - bytesToPrint) more bytes)")
     }
