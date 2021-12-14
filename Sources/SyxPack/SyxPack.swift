@@ -181,16 +181,15 @@ public func identifyMessage(data: [UInt8]) {
         print("Development")
     case 0x00:
         print("Manufacturer-specific System Exclusive message")
-        let manufacturerId: ByteArray = [
-            data[1], data[2], data[3]
-        ]
-        print("Manufacturer ID: Extended, \(manufacturerId.hexDump(config: simpleHexDumpConfig))")
+        let manufacturer = Manufacturer(identifier: .extended((data[1], data[2], data[3])))
+        print("Manufacturer:\n\(manufacturer)")
         payloadOffset += 2
     default:
         print("Manufacturer-specific System Exclusive message")
-        print("Manufacturer ID: Standard, \(String(format: "%02X", data[1]))")
+        let manufacturer = Manufacturer(identifier: .standard(data[1]))
+        print("Manufacturer:\n\(manufacturer)")
     }
-    
+
     let payloadLength = terminatorOffset - payloadOffset
     print("Payload: \(payloadLength) bytes")
     let bytesToPrint = min(16, payloadLength)
