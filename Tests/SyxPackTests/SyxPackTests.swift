@@ -33,6 +33,11 @@ final class SyxPackTests: XCTestCase {
         XCTAssertEqual(dump, "let data: ByteArray = [\n    0x41, 0x42, 0x43, \n]")
     }
     
+    func test_manufacturer_nameIsCorrect() {
+        let manufacturer = Manufacturer.yamaha
+        XCTAssertEqual(manufacturer.displayName, "Yamaha")
+    }
+    
     /*
     func test_message_universal_nonRealTime_isConstructedFromBytesCorrectly() {
         // KORG minilogue xd Identity Reply (Universal Non-Realtime

@@ -144,7 +144,7 @@ extension ByteArray {
         return lines.joined(separator: "\n")
     }
 
-    func sourceDump(config: SourceDumpConfig = .defaultConfig) -> String {
+    public func sourceDump(config: SourceDumpConfig = .defaultConfig) -> String {
         var lines = [String]()
         
         lines.append("let \(config.variableName): \(config.typeName) = [")
@@ -267,6 +267,11 @@ public struct Manufacturer {
         }
         return .unknown
     }
+    
+    public static let kawai = Manufacturer(identifier: .standard(0x40))
+    public static let roland = Manufacturer(identifier: .standard(0x41))
+    public static let korg = Manufacturer(identifier: .standard(0x42))
+    public static let yamaha = Manufacturer(identifier: .standard(0x43))
 }
 
 typealias ManufacturerInformation = [String: (String, String, Manufacturer.Group)]
