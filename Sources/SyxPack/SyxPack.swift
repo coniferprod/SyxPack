@@ -272,6 +272,8 @@ public struct Manufacturer {
     public static let roland = Manufacturer(identifier: .standard(0x41))
     public static let korg = Manufacturer(identifier: .standard(0x42))
     public static let yamaha = Manufacturer(identifier: .standard(0x43))
+    
+    public static let development = Manufacturer(identifier: .development)
 }
 
 typealias ManufacturerInformation = [String: (String, String, Manufacturer.Group)]
@@ -354,7 +356,7 @@ public typealias Payload = ByteArray
 
 public enum Message {
     case universal(Universal.Kind, Universal.Header, Payload)
-    case manufacturer(Manufacturer.Identifier, Payload)
+    case manufacturer(Manufacturer, Payload)
 }
 
 extension Message {
@@ -388,18 +390,18 @@ extension Message {
         case 0x7F:
             self = .universal(.realTime, getHeader(), getPayload(startIndex: 4))
         case 0x00:
-            self = .manufacturer(.extended((data[1], data[2], data[3])), getPayload(startIndex: 4))
+            self = .manufacturer(Manufacturer(identifier: .extended((data[1], data[2], data[3]))), getPayload(startIndex: 4))
         default:
-            self = .manufacturer(.standard(data[1]), getPayload())
+            self = .manufacturer(Manufacturer(identifier: .standard(data[1])), getPayload())
         }
     }
     
     public var payload: Payload {
         switch self {
-        case .manufacturer(_, let payload):
-            return payload
-        case .universal(_, _, let payload):
-            return payload
+        case .manufacturer(_, let data):
+            return data
+        case .universal(_, _, let data):
+            return data
         }
     }
 }
@@ -438,12 +440,9 @@ extension Message: CustomStringConvertible {
             lines.append("Sub-ID #2: \(String(format: "%02X", header.subId2))")
             lines.append("Payload: \(payload.count) bytes")
             
-        case .manufacturer(let id, let payload):
+        case .manufacturer(let manufacturer, let payload):
             lines.append("Manufacturer-specific System Exclusive message")
-            
-            let manufacturer = Manufacturer(identifier: id)
             lines.append("Manufacturer:\n\(manufacturer)")
-            
             lines.append("Payload   : \(payload.count) bytes")
         }
         
