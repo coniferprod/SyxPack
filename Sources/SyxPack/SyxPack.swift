@@ -535,17 +535,23 @@ extension ByteArray {
 }
 
 extension ByteArray {
-    public func nybblified() -> ByteArray {
+    public func nybblified(highFirst: Bool = true) -> ByteArray {
         var result = ByteArray()
         self.forEach { b in
             let n = b.nybbles
-            result.append(n.high)
-            result.append(n.low)
+            if highFirst {
+                result.append(n.high)
+                result.append(n.low)
+            }
+            else {
+                result.append(n.low)
+                result.append(n.high)
+            }
         }
         return result
     }
     
-    public func denybblified() -> ByteArray? {
+    public func denybblified(highFirst: Bool = true) -> ByteArray? {
         guard self.count % 2 == 0 else {
             return nil
         }
@@ -556,8 +562,10 @@ extension ByteArray {
         var offset = 0
         let count = self.count / 2
         while index < count {
-            let b = Byte(nybbles: (high: self[offset], low: self[offset + 1]))
-            result.append(b)
+            result.append(
+                highFirst ?
+                    Byte(nybbles: (high: self[offset], low: self[offset + 1])) :
+                    Byte(nybbles: (high: self[offset + 1], low: self[offset])))
             index += 1
             offset += 2
         }
