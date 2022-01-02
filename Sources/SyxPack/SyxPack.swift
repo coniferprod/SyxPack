@@ -19,7 +19,7 @@ extension Byte {
         self |= 1 << position
     }
 
-    public mutating func unsetBit(_ position: Int) {
+    public mutating func clearBit(_ position: Int) {
         self &= ~(1 << position)
     }
 
@@ -233,21 +233,7 @@ public func identifyMessage(data: [UInt8]) {
 }
 
 public struct Manufacturer {
-    public enum Identifier { /*: Equatable {
-        public static func == (lhs: Manufacturer.Identifier, rhs: Manufacturer.Identifier) -> Bool {
-            switch (lhs, rhs) {
-            case (let .standard(lhsByte), let .standard(rhsByte)):
-                return lhsByte == rhsByte
-            case (let .extended(lhsByteTriplet), let .extended(rhsByteTriplet)):
-                return lhsByteTriplet.0 == rhsByteTriplet.0 &&
-                       lhsByteTriplet.1 == rhsByteTriplet.1 &&
-                       lhsByteTriplet.2 == rhsByteTriplet.2
-            default:
-                return lhs == rhs
-            }
-        }
-        */
-    
+    public enum Identifier {
         case standard(Byte)
         case extended(ByteTriplet)
         case development
@@ -294,6 +280,29 @@ public struct Manufacturer {
     
     public static let development = Manufacturer(identifier: .development)
 }
+
+// MARK: - Equatable
+
+extension Manufacturer.Identifier: Equatable {
+}
+
+// Explicitly implementing the equals operator because the enum has associated values
+public func ==(lhs: Manufacturer.Identifier, rhs: Manufacturer.Identifier) -> Bool {
+    switch (lhs, rhs) {
+    case (let .standard(lhsByte), let .standard(rhsByte)):
+        return lhsByte == rhsByte
+    case (let .extended(lhsByteTriplet), let .extended(rhsByteTriplet)):
+        return lhsByteTriplet.0 == rhsByteTriplet.0 &&
+               lhsByteTriplet.1 == rhsByteTriplet.1 &&
+               lhsByteTriplet.2 == rhsByteTriplet.2
+    case (.development, .development):
+        return true
+    default:
+        return false
+    }
+}
+
+
 
 typealias ManufacturerInformation = [String: (String, String, Manufacturer.Group)]
 
@@ -562,10 +571,9 @@ extension ByteArray {
         var offset = 0
         let count = self.count / 2
         while index < count {
-            result.append(
-                highFirst ?
-                    Byte(nybbles: (high: self[offset], low: self[offset + 1])) :
-                    Byte(nybbles: (high: self[offset + 1], low: self[offset])))
+            result.append(highFirst ?
+                Byte(nybbles: (high: self[offset], low: self[offset + 1])) :
+                Byte(nybbles: (high: self[offset + 1], low: self[offset])))
             index += 1
             offset += 2
         }
