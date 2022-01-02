@@ -283,6 +283,9 @@ public struct Manufacturer {
 
 // MARK: - Equatable
 
+extension Manufacturer: Equatable {    
+}
+
 extension Manufacturer.Identifier: Equatable {
 }
 

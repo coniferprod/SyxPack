@@ -12,4 +12,10 @@ final class ManufacturerTests: XCTestCase {
         let id2: Manufacturer.Identifier = .standard(0x42)
         XCTAssertTrue(id1 == id2)
     }
+    
+    func test_isEqual() {
+        let manuf1 = Manufacturer.korg
+        let manuf2 = Manufacturer.korg
+        XCTAssertTrue(manuf1 == manuf2)
+    }
 }
