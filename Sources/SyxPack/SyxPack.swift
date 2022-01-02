@@ -3,6 +3,7 @@ import Foundation
 public typealias Byte = UInt8
 public typealias ByteArray = [Byte]
 public typealias ByteTriplet = (Byte, Byte, Byte)
+public typealias Nybbles = (high: Byte, low: Byte)
 
 
 extension Data {
@@ -24,6 +25,24 @@ extension Byte {
 
     public func isBitSet(_ position: Int) -> Bool {
         return (self & (1 << position)) != 0
+    }
+}
+
+extension Byte {
+    public var highNybble: Byte {
+        return (self & 0xf0) >> 4
+    }
+    
+    public var lowNybble: Byte {
+        return self & 0x0f
+    }
+    
+    public var nybbles: Nybbles {
+        return (high: self.highNybble, low: self.lowNybble)
+    }
+    
+    public init(nybbles: Nybbles) {
+        self = (nybbles.high << 4) | (nybbles.low)
     }
 }
 
@@ -509,6 +528,38 @@ extension ByteArray {
         var result = ByteArray()
         chunks.forEach { chunk in
             result.append(contentsOf: packChunk(data: chunk))
+        }
+
+        return result
+    }
+}
+
+extension ByteArray {
+    public func nybblified() -> ByteArray {
+        var result = ByteArray()
+        self.forEach { b in
+            let n = b.nybbles
+            result.append(n.high)
+            result.append(n.low)
+        }
+        return result
+    }
+    
+    public func denybblified() -> ByteArray? {
+        guard self.count % 2 == 0 else {
+            return nil
+        }
+        
+        var result = ByteArray()
+        
+        var index = 0
+        var offset = 0
+        let count = self.count / 2
+        while index < count {
+            let b = Byte(nybbles: (high: self[offset], low: self[offset + 1]))
+            result.append(b)
+            index += 1
+            offset += 2
         }
 
         return result
