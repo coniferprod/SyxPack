@@ -239,7 +239,7 @@ public struct Manufacturer {
         case development
     }
 
-    public enum Group: Equatable {
+    public enum Group {
         case unknown
         case american
         case europeanOrOther
@@ -305,6 +305,8 @@ public func ==(lhs: Manufacturer.Identifier, rhs: Manufacturer.Identifier) -> Bo
     }
 }
 
+extension Manufacturer.Group: Equatable {
+}
 
 
 typealias ManufacturerInformation = [String: (String, String, Manufacturer.Group)]
@@ -380,7 +382,6 @@ public enum Universal: Equatable {
         let subId1: Byte
         let subId2: Byte
     }
-    //public typealias Header = (deviceChannel: Byte, subId1: Byte, subId2: Byte)
 }
 
 public typealias Payload = ByteArray
@@ -410,8 +411,6 @@ extension Message {
         guard data.last == 0xF7 else {
             return nil
         }
-        
-        //let header: Universal.Header = (deviceChannel: data[2], subId1: data[3], subId2: data[4])
         
         switch data[1] {
         case 0x7D:
