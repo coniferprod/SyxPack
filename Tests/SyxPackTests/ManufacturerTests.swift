@@ -2,9 +2,14 @@ import XCTest
 @testable import SyxPack
 
 final class ManufacturerTests: XCTestCase {
-    func test_displayNameIsCorrect() {
-        let manufacturer = Manufacturer.yamaha
-        XCTAssertEqual(manufacturer.displayName, "Yamaha")
+    func test_standardIdentifier() {
+        let manufacturer = Manufacturer(identifier: .standard(0x43))
+        XCTAssertEqual(manufacturer.canonicalName, "Yamaha Corporation")
+    }
+    
+    func test_extendedIdentifier() {
+        let manufacturer = Manufacturer(identifier: .extended((0x00, 0x00, 0x0E)))
+        XCTAssertEqual(manufacturer.canonicalName, "Alesis Studio Electronics")
     }
     
     func test_identifierIsEqual() {

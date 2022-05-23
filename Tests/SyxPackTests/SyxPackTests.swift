@@ -31,33 +31,5 @@ final class SyxPackTests: XCTestCase {
             indent: 4)
         let dump = data.sourceDump(config: config)
         XCTAssertEqual(dump, "let data: ByteArray = [\n    0x41, 0x42, 0x43, \n]")
-    }
-    
-    func test_manufacturer_nameIsCorrect() {
-        let manufacturer = Manufacturer.yamaha
-        XCTAssertEqual(manufacturer.displayName, "Yamaha")
-    }
-    
-    /*
-    func test_message_universal_nonRealTime_isConstructedFromBytesCorrectly() {
-        // KORG minilogue xd Identity Reply (Universal Non-Realtime
-        let data: ByteArray = [0xF0, 0x7E, 0x00, 0x06, 0x02, 0x42, 0x51, 0x01, 0x00, 0x00,
-                               0x01, 0x01, 0x01, 0x01, 0xF7]
-        if let message = Message(data: data) {
-            XCTAssertEqual(message, Message.universal(.nonRealTime, Universal.Header(deviceChannel: 0x00, subId1: 0x06, subId2: 0x02)))
-            XCTAssertEqual(message.payload.count, 12)
-        }
-        else {
-            XCTFail("Unable to construct message")
-        }
-    }
-    
-    func test_message_universal_realTime_isConstructedFromBytesCorrectly() {
-        
-    }
-
-    func test_message_manufacturer_isConstructedFromBytesCorrectly() {
-        
-    }
-     */
+    }    
 }
