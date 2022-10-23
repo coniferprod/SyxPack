@@ -17,7 +17,7 @@ public typealias Payload = ByteArray
 
 public enum Message {
     case universal(Universal.Kind, Universal.Header, Payload)
-    case manufacturer(Manufacturer, Payload)
+    case manufacturerSpecific(Manufacturer, Payload)
 }
 
 extension Message {
@@ -43,21 +43,23 @@ extension Message {
         
         switch data[1] {
         case 0x7D:
-            self = .manufacturer(.development, getPayload())
+            self = .manufacturerSpecific(.development, getPayload())
         case 0x7E:
             self = .universal(.nonRealTime, getHeader(), getPayload(startIndex: 4))
         case 0x7F:
             self = .universal(.realTime, getHeader(), getPayload(startIndex: 4))
         case 0x00:
-            self = .manufacturer(Manufacturer(identifier: .extended((data[1], data[2], data[3]))), getPayload(startIndex: 4))
+            self = .manufacturerSpecific(
+                Manufacturer.extended((data[1], data[2], data[3])),
+                getPayload(startIndex: 4))
         default:
-            self = .manufacturer(Manufacturer(identifier: .standard(data[1])), getPayload())
+            self = .manufacturerSpecific(Manufacturer.standard(data[1]), getPayload())
         }
     }
     
     public var payload: Payload {
         switch self {
-        case .manufacturer(_, let data):
+        case .manufacturerSpecific(_, let data):
             return data
         case .universal(_, _, let data):
             return data
@@ -86,7 +88,7 @@ extension Message: CustomStringConvertible {
             lines.append("Sub-ID #2: \(String(format: "%02X", header.subId2))")
             lines.append("Payload: \(payload.count) bytes")
             
-        case .manufacturer(let manufacturer, let payload):
+        case .manufacturerSpecific(let manufacturer, let payload):
             lines.append("Manufacturer-specific System Exclusive message")
             lines.append("Manufacturer:\n\(manufacturer)")
             lines.append("Payload   : \(payload.count) bytes")

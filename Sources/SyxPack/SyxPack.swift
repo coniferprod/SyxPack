@@ -74,19 +74,27 @@ extension Character {
     }
 }
 
+public let minimumSystemExclusiveByteCount = 5
+public let initiator: Byte = 0xF0
+public let terminator: Byte = 0xF7
+public let development: Byte = 0x7D
+public let extendedManufacturer: Byte = 0x00
+public let universalNonRealTime: Byte = 0x7E
+public let universalRealTime: Byte = 0x7F
+
 public func identifyMessage(data: ByteArray) {
-    guard data.count >= 5 else {
-        print("Too few bytes for a System Exclusive message")
+    guard data.count >= minimumSystemExclusiveByteCount else {
+        print("Not enough bytes to be a System Exclusive message")
         return
     }
     
-    guard data.first == 0xF0 else {
-        print("Not initiated by F0H")
+    guard data.first == initiator else {
+        print("First byte is not System Exclusive initiator F0h")
         return
     }
     
-    guard data.last == 0xF7 else {
-        print("Not terminated by F7H")
+    guard data.last == terminator else {
+        print("Last byte is not System Exclusive terminator F7h")
         return
     }
     
@@ -97,20 +105,20 @@ public func identifyMessage(data: ByteArray) {
         includeOptions: [], indent: 0)
 
     switch data[1] {
-    case 0x7E:
+    case universalNonRealTime:
         print("Universal Non-Realtime System Exclusive message")
-    case 0x7F:
+    case universalRealTime:
         print("Universal Realtime System Exclusive message")
-    case 0x7D:
+    case development:
         print("Development")
-    case 0x00:
-        print("Manufacturer-specific System Exclusive message")
-        let manufacturer = Manufacturer(identifier: .extended((data[1], data[2], data[3])))
+    case extendedManufacturer:
+        print("Manufacturer-specific System Exclusive message (extended)")
+        let manufacturer = Manufacturer.extended((data[1], data[2], data[3]))
         print("Manufacturer:\n\(manufacturer)")
         payloadStartOffset += 2
     default:
-        print("Manufacturer-specific System Exclusive message")
-        let manufacturer = Manufacturer(identifier: .standard(data[1]))
+        print("Manufacturer-specific System Exclusive message (standard)")
+        let manufacturer = Manufacturer.standard(data[1])
         print("Manufacturer:\n\(manufacturer)")
     }
 
