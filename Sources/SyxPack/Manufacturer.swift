@@ -1,12 +1,15 @@
 import Foundation
 
+/// Byte triplet to represent extended manufacturer identifiers.
 public typealias ByteTriplet = (Byte, Byte, Byte)
 
+/// Represents a MIDI equipment manufacturer.
 public enum Manufacturer {
     case standard(Byte)
     case extended(ByteTriplet)
     case development
 
+    /// Manufacturer groups defined by MMA.
     public enum Group {
         case development
         case northAmerican
@@ -14,6 +17,7 @@ public enum Manufacturer {
         case japanese
     }
 
+    /// Gets the manufacturer group based on the identifier.
     public var group: Group {
         switch self {
         case .development:
@@ -41,12 +45,38 @@ public enum Manufacturer {
         }
     }
     
+    /// Predefined manufacturer identifier for Kawai.
     public static let kawai = Manufacturer.standard(0x40)
+    
+    /// Predefined manufacturer identifier for Roland.
     public static let roland = Manufacturer.standard(0x41)
+
+    /// Predefined manufacturer identifier for KORG.
     public static let korg = Manufacturer.standard(0x42)
+
+    /// Predefined manufacturer identifier for Yamaha.
     public static let yamaha = Manufacturer.standard(0x43)
+
+    /// Predefined manufacturer identifier for Alesis.
     public static let alesis = Manufacturer.extended((0x00, 0x00, 0x0E))
     
+    /// Gets the bytes of the manufacturer identifier.
+    public var identifier: ByteArray {
+        var result = ByteArray()
+        switch self {
+        case .development:
+            result.append(0x7D)
+        case .standard(let b):
+            result.append(b)
+        case .extended(let bs):
+            result.append(bs.0)
+            result.append(bs.1)
+            result.append(bs.2)
+        }
+        return result
+    }
+
+    /// Gets the manufacturer name.
     public var name: String {
         switch self {
         case .development:
@@ -211,8 +241,8 @@ public enum Manufacturer {
 extension Manufacturer: Equatable { }
 extension Manufacturer.Group: Equatable { }
 
-// Explicitly implementing the equals operator for Manufacturer
-// because the some of its variants have associated values.
+/// Explicit implementation of the equals operator for Manufacturer.
+/// Needed because the some of its variants have associated values.
 public func ==(lhs: Manufacturer, rhs: Manufacturer) -> Bool {
     switch (lhs, rhs) {
     case (let .standard(lhsByte), let .standard(rhsByte)):
@@ -229,6 +259,7 @@ public func ==(lhs: Manufacturer, rhs: Manufacturer) -> Bool {
 }
 
 extension Manufacturer.Group: CustomStringConvertible {
+    /// Gets a printable string representation of the manufacturer group.
     public var description: String {
         switch self {
         case .northAmerican:
@@ -244,6 +275,7 @@ extension Manufacturer.Group: CustomStringConvertible {
 }
 
 extension Manufacturer: CustomStringConvertible {
+    /// Gets a printable string representation of the manufacturer, including the identifier in hexadecimal numbers.
     public var description: String {
         var result = self.name + " ("
         

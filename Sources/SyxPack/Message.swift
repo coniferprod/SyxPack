@@ -1,11 +1,14 @@
 import Foundation
 
+/// Represents a Universal System Exclusive message.
 public enum Universal: Equatable {
+    /// The kind of the universal message.
     public enum Kind {
         case nonRealTime
         case realTime
     }
     
+    /// The header of a universal message.
     public struct Header {
         let deviceChannel: Byte
         let subId1: Byte
@@ -13,14 +16,17 @@ public enum Universal: Equatable {
     }
 }
 
+/// Convenience definition for message payload.
 public typealias Payload = ByteArray
 
+/// Represents a MIDI System Exclusive message.
 public enum Message {
     case universal(Universal.Kind, Universal.Header, Payload)
     case manufacturerSpecific(Manufacturer, Payload)
 }
 
 extension Message {
+    /// Initializes a message from the System Exclusive data bytes.
     public init?(data: ByteArray) {
         func getPayload(startIndex: Int = 2) -> Payload {
             let endIndex = data.count - 1
@@ -57,6 +63,7 @@ extension Message {
         }
     }
     
+    /// Gets the payload of the message.
     public var payload: Payload {
         switch self {
         case .manufacturerSpecific(_, let data):
@@ -66,6 +73,7 @@ extension Message {
         }
     }
     
+    /// Gets the message bytes, complete with delimiters.
     public func asData() -> ByteArray {
         var result = ByteArray()
         
@@ -73,16 +81,7 @@ extension Message {
         
         switch self {
         case .manufacturerSpecific(let manufacturer, let payload):
-            switch manufacturer {
-            case .development:
-                result.append(0x7d)
-            case .extended(let bs):
-                result.append(bs.0)
-                result.append(bs.1)
-                result.append(bs.2)
-            case .standard(let b):
-                result.append(b)
-            }
+            result.append(contentsOf: manufacturer.identifier)
             result.append(contentsOf: payload)
             
         case .universal(let kind, let header, let payload):
@@ -106,6 +105,7 @@ extension Message {
 }
 
 extension Message: CustomStringConvertible {
+    /// Gets a printable string representation of the message.
     public var description: String {
         var lines = [String]()
         
