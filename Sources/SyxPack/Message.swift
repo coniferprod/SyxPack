@@ -65,6 +65,44 @@ extension Message {
             return data
         }
     }
+    
+    public func asData() -> ByteArray {
+        var result = ByteArray()
+        
+        result.append(initiator)
+        
+        switch self {
+        case .manufacturerSpecific(let manufacturer, let payload):
+            switch manufacturer {
+            case .development:
+                result.append(0x7d)
+            case .extended(let bs):
+                result.append(bs.0)
+                result.append(bs.1)
+                result.append(bs.2)
+            case .standard(let b):
+                result.append(b)
+            }
+            result.append(contentsOf: payload)
+            
+        case .universal(let kind, let header, let payload):
+            switch kind {
+            case .nonRealTime:
+                result.append(0x7E)
+                
+            case .realTime:
+                result.append(0x7F)
+            }
+            result.append(header.deviceChannel)
+            result.append(header.subId1)
+            result.append(header.subId2)
+            result.append(contentsOf: payload)
+        }
+
+        result.append(terminator)
+
+        return result
+    }
 }
 
 extension Message: CustomStringConvertible {
