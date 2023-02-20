@@ -24,4 +24,22 @@ final class ByteTests: XCTestCase {
         let b = Byte(nybbles: nybbles)
         XCTAssertEqual(b, 0xa4)
     }
+    
+    func test_byteFromBits() {
+        let bs: Bits = [.zero, .zero, .one, .one, .one, .zero, .zero, .zero]
+        let b = bs.byte()
+        XCTAssertEqual(b, 0b00011100)
+    }
+    
+    func test_bitsFromByte() {
+        let b: Byte = 0b00011100
+        let bs = b.bits()
+        XCTAssertEqual(bs, [.zero, .zero, .one, .one, .one, .zero, .zero, .zero])
+    }
+    
+    func test_replaceBits() {
+        var b: Byte =          0b01010110
+        b.replaceBits(2...5, with: 0b1010)
+        XCTAssertEqual(b, 0b01101010)
+    }    
 }
