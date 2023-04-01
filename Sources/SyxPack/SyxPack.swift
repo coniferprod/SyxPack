@@ -74,27 +74,19 @@ extension Character {
     }
 }
 
-public let minimumSystemExclusiveByteCount = 5
-public let initiator: Byte = 0xF0
-public let terminator: Byte = 0xF7
-public let development: Byte = 0x7D
-public let extendedManufacturer: Byte = 0x00
-public let universalNonRealTime: Byte = 0x7E
-public let universalRealTime: Byte = 0x7F
-
 public func identifyMessage(data: ByteArray) {
-    guard data.count >= minimumSystemExclusiveByteCount else {
+    guard data.count >= Message.minimumByteCount else {
         print("Not enough bytes to be a System Exclusive message")
         return
     }
     
-    guard data.first == initiator else {
-        print("First byte is not System Exclusive initiator F0h")
+    guard data.first == Message.initiator else {
+        print("First byte is not System Exclusive initiator \(String(format: "%02X", Message.initiator))H")
         return
     }
     
-    guard data.last == terminator else {
-        print("Last byte is not System Exclusive terminator F7h")
+    guard data.last == Message.terminator else {
+        print("Last byte is not System Exclusive terminator \(String(format: "%02X", Message.terminator))H")
         return
     }
     
@@ -105,13 +97,13 @@ public func identifyMessage(data: ByteArray) {
         includeOptions: [], indent: 0)
 
     switch data[1] {
-    case universalNonRealTime:
+    case Universal.Kind.nonRealTimeIdentifier:
         print("Universal Non-Realtime System Exclusive message")
-    case universalRealTime:
+    case Universal.Kind.realTimeIdentifier:
         print("Universal Realtime System Exclusive message")
-    case development:
+    case Manufacturer.developmentIdentifierByte:
         print("Development")
-    case extendedManufacturer:
+    case Manufacturer.extendedIdentifierFirstByte:
         print("Manufacturer-specific System Exclusive message (extended)")
         let manufacturer = Manufacturer.extended((data[1], data[2], data[3]))
         print("Manufacturer:\n\(manufacturer)")

@@ -1,11 +1,17 @@
 import Foundation
 
-/// Represents a Universal System Exclusive message.
+/// Represents a Universal System Exclusive Message.
 public enum Universal: Equatable {
     /// The kind of the universal message.
     public enum Kind {
         case nonRealTime
         case realTime
+        
+        /// Identifies a non-real-time Universal System Exclusive Message.
+        public static let nonRealTimeIdentifier: Byte = 0x7E
+        
+        /// Identifies a real-time universal System Exclusive Message.
+        public static let realTimeIdentifier: Byte = 0x7F
     }
     
     /// The header of a universal message.
@@ -16,13 +22,22 @@ public enum Universal: Equatable {
     }
 }
 
-/// Convenience definition for message payload.
+/// Convenience type definition for message payload.
 public typealias Payload = ByteArray
 
 /// Represents a MIDI System Exclusive message.
 public enum Message {
     case universal(Universal.Kind, Universal.Header, Payload)
     case manufacturerSpecific(Manufacturer, Payload)
+    
+    /// System Exclusive initiator byte
+    public static let initiator: Byte = 0xF0
+    
+    /// System Exclusive terminator byte
+    public static let terminator: Byte = 0xF7
+    
+    /// Minimum byte count for a valid System Exclusive message
+    public static let minimumByteCount = 5
 }
 
 extension Message {
@@ -37,24 +52,24 @@ extension Message {
             return Universal.Header(deviceChannel: data[2], subId1: data[3], subId2: data[4])
         }
         
-        guard data.count >= 5 else {
+        guard data.count >= Message.minimumByteCount else {
             return nil
         }
-        guard data.first == 0xF0 else {
+        guard data.first == Message.initiator else {
             return nil
         }
-        guard data.last == 0xF7 else {
+        guard data.last == Message.terminator else {
             return nil
         }
         
         switch data[1] {
-        case 0x7D:
+        case Manufacturer.developmentIdentifierByte:
             self = .manufacturerSpecific(.development, getPayload())
-        case 0x7E:
+        case Universal.Kind.nonRealTimeIdentifier:
             self = .universal(.nonRealTime, getHeader(), getPayload(startIndex: 4))
-        case 0x7F:
+        case Universal.Kind.realTimeIdentifier:
             self = .universal(.realTime, getHeader(), getPayload(startIndex: 4))
-        case 0x00:
+        case Manufacturer.extendedIdentifierFirstByte:
             self = .manufacturerSpecific(
                 Manufacturer.extended((data[1], data[2], data[3])),
                 getPayload(startIndex: 4))
@@ -77,7 +92,7 @@ extension Message {
     public func asData() -> ByteArray {
         var result = ByteArray()
         
-        result.append(initiator)
+        result.append(Message.initiator)
         
         switch self {
         case .manufacturerSpecific(let manufacturer, let payload):
@@ -87,10 +102,10 @@ extension Message {
         case .universal(let kind, let header, let payload):
             switch kind {
             case .nonRealTime:
-                result.append(0x7E)
+                result.append(Universal.Kind.nonRealTimeIdentifier)
                 
             case .realTime:
-                result.append(0x7F)
+                result.append(Universal.Kind.realTimeIdentifier)
             }
             result.append(header.deviceChannel)
             result.append(header.subId1)
@@ -98,7 +113,7 @@ extension Message {
             result.append(contentsOf: payload)
         }
 
-        result.append(terminator)
+        result.append(Message.terminator)
 
         return result
     }

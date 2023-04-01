@@ -5,6 +5,12 @@ public typealias ByteTriplet = (Byte, Byte, Byte)
 
 /// Represents a MIDI equipment manufacturer.
 public enum Manufacturer {
+    /// Identifier byte for development/non-commercial
+    public static let developmentIdentifierByte: Byte = 0x7D
+    
+    /// First byte of extended manufacturer identifier triplet
+    public static let extendedIdentifierFirstByte: Byte = 0x00
+
     case standard(Byte)
     case extended(ByteTriplet)
     case development
@@ -65,7 +71,7 @@ public enum Manufacturer {
         var result = ByteArray()
         switch self {
         case .development:
-            result.append(0x7D)
+            result.append(Manufacturer.developmentIdentifierByte)
         case .standard(let b):
             result.append(b)
         case .extended(let bs):
