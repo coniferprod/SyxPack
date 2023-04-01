@@ -1,6 +1,7 @@
 import Foundation
 
 extension Data {
+    /// Returns the contents of this `Data` object as a byte array.
     public var bytes: ByteArray {
         var byteArray = ByteArray(repeating: 0, count: self.count)
         self.copyBytes(to: &byteArray, count: self.count)
@@ -8,7 +9,9 @@ extension Data {
     }
 }
 
+/// Configuration object for the hex dump of a byte array.
 public struct HexDumpConfig {
+    /// Flags to control the inclusion of hex dump features.
     public struct IncludeOptions: OptionSet {
         public let rawValue: UInt8
 
@@ -25,13 +28,15 @@ public struct HexDumpConfig {
     public var uppercased: Bool
     public var includeOptions: IncludeOptions
     public var indent: Int
-    
+
+    /// Default hex dump configuration
     public static let defaultConfig = HexDumpConfig(
         bytesPerLine: 16,
         uppercased: true,
         includeOptions: [.offset, .printableCharacters, .midChunkGap],
         indent: 0)
     
+    /// Simple hex dump configuration
     public static let plainConfig = HexDumpConfig(
         bytesPerLine: 16,
         uppercased: true,
@@ -39,6 +44,7 @@ public struct HexDumpConfig {
         indent: 0)
 }
 
+/// Configuration object for the source code dump of this byte array.
 public struct SourceDumpConfig {
     public var bytesPerLine: Int
     public var uppercased: Bool
@@ -46,6 +52,7 @@ public struct SourceDumpConfig {
     public var typeName: String
     public var indent: Int
     
+    /// Default source dump configuration
     public static let defaultConfig = SourceDumpConfig(
         bytesPerLine: 16,
         uppercased: true,
@@ -64,7 +71,9 @@ extension Array {
 }
 
 extension Character {
-    var isPrintable: Bool {
+    /// Returns `true` if this character is a printable ASCII character,
+    /// `false` otherwise.
+    public var isPrintable: Bool {
         if let v = self.asciiValue {
             if v >= 0x20 && v < 0x7f {
                 return true
@@ -74,6 +83,7 @@ extension Character {
     }
 }
 
+/// Identifies a MIDI System Exclusive message based on its data content.
 public func identifyMessage(data: ByteArray) {
     guard data.count >= Message.minimumByteCount else {
         print("Not enough bytes to be a System Exclusive message")

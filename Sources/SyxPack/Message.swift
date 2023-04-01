@@ -42,6 +42,8 @@ public enum Message {
 
 extension Message {
     /// Initializes a message from the System Exclusive data bytes.
+    /// Returns an instance if the data contents comprise a valid message,
+    /// `nil` otherwise.
     public init?(data: ByteArray) {
         func getPayload(startIndex: Int = 2) -> Payload {
             let endIndex = data.count - 1
