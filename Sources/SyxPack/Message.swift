@@ -89,9 +89,10 @@ extension Message {
             return data
         }
     }
-    
-    /// Gets the message bytes, complete with delimiters.
-    public func asData() -> ByteArray {
+}
+
+extension Message: SystemExclusiveData {
+    private func collectData() -> ByteArray {
         var result = ByteArray()
         
         result.append(Message.initiator)
@@ -100,7 +101,7 @@ extension Message {
         case .manufacturerSpecific(let manufacturer, let payload):
             result.append(contentsOf: manufacturer.identifier)
             result.append(contentsOf: payload)
-            
+
         case .universal(let kind, let header, let payload):
             switch kind {
             case .nonRealTime:
@@ -118,6 +119,16 @@ extension Message {
         result.append(Message.terminator)
 
         return result
+    }
+    
+    /// Gets the message bytes, complete with delimiters.
+    public func asData() -> ByteArray {
+        return self.collectData()
+    }
+
+    public var dataLength: Int {
+        let data = self.collectData()
+        return data.count
     }
 }
 

@@ -291,11 +291,39 @@ extension Manufacturer: CustomStringConvertible {
         case .extended(let bs):
             result += String(format: "%02X %02X %02X", bs.0, bs.1, bs.2)
         case .development:
-            return "7D"
+            return String(format: "%02X", Manufacturer.developmentIdentifierByte)
         }
 
         result += ")"
         
         return result
+    }
+}
+
+// MARK: - SystemExclusiveData implementation
+
+extension Manufacturer: SystemExclusiveData {
+    public func asData() -> ByteArray {
+        var result = ByteArray()
+        switch self {
+        case .standard(let b):
+            result.append(b)
+        case .extended(let bs):
+            result.append(bs.0)
+            result.append(bs.1)
+            result.append(bs.2)
+        case .development:
+            result.append(Manufacturer.developmentIdentifierByte)
+        }
+        return result
+    }
+    
+    public var dataLength: Int {
+        switch self {
+        case .extended( _):
+            return 3
+        default:
+            return 1
+        }
     }
 }

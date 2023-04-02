@@ -1,5 +1,14 @@
 import Foundation
 
+/// Protocol for MIDI System Exclusive data.
+public protocol SystemExclusiveData {
+    /// Gets the data as a byte array.
+    func asData() -> ByteArray
+    
+    /// Gets the length of the data.
+    var dataLength: Int { get }
+}
+
 extension Data {
     /// Returns the contents of this `Data` object as a byte array.
     public var bytes: ByteArray {
