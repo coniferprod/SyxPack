@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "ByteKit",
+        "repositoryURL": "https://github.com/coniferprod/ByteKit",
+        "state": {
+          "branch": null,
+          "revision": "55ad47ae133f9d63198d1d349ff68eedde9c4bff",
+          "version": "0.4.0"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

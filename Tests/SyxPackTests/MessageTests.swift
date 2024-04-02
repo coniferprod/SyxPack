@@ -1,5 +1,6 @@
 import XCTest
 @testable import SyxPack
+import ByteKit
 
 final class MessageTests: XCTestCase {
     let standardManufacturerMessageBytes: ByteArray = [

@@ -1,4 +1,4 @@
-import Foundation
+import ByteKit
 
 /// Byte triplet to represent extended manufacturer identifiers.
 public typealias ByteTriplet = (Byte, Byte, Byte)
@@ -13,44 +13,7 @@ public enum Manufacturer {
 
     case standard(Byte)
     case extended(ByteTriplet)
-    case development
 
-    /// Manufacturer groups defined by MMA.
-    public enum Group {
-        case development
-        case northAmerican
-        case europeanAndOther
-        case japanese
-    }
-
-    /// Gets the manufacturer group based on the identifier.
-    public var group: Group {
-        switch self {
-        case .development:
-            return Group.development
-        case .standard(let b):
-            if (0x01..<0x40).contains(b) {
-                return Group.northAmerican
-            }
-            else if (0x40..<0x60).contains(b) {
-                return Group.japanese
-            }
-            else {
-                return Group.europeanAndOther
-            }
-        case .extended(let bs):
-            if bs.1 & (1 << 6) != 0 {  // 0x4x
-                return Group.japanese
-            }
-            else if bs.1 & (1 << 5) != 0 { // 0x2x
-                return Group.europeanAndOther
-            }
-            else {
-                return Group.northAmerican
-            }
-        }
-    }
-    
     /// Predefined manufacturer identifier for Kawai.
     public static let kawai = Manufacturer.standard(0x40)
     
@@ -70,8 +33,6 @@ public enum Manufacturer {
     public var identifier: ByteArray {
         var result = ByteArray()
         switch self {
-        case .development:
-            result.append(Manufacturer.developmentIdentifierByte)
         case .standard(let b):
             result.append(b)
         case .extended(let bs):
@@ -85,8 +46,6 @@ public enum Manufacturer {
     /// Gets the manufacturer name.
     public var name: String {
         switch self {
-        case .development:
-            return "Development / Non-commercial"
         case .standard(let b):
             let idString = String(format: "%02X", b)
             if let nameString = Manufacturer.allNames[idString] {
@@ -239,13 +198,14 @@ public enum Manufacturer {
         "004005": "Alpha Theta Corporation",
         "004006": "Pioneer Corporation",
         "004007": "Slik Corporation",
+        
+        "7D": "Development / Non-Commercial"
     ]
 }
 
 // MARK: - Equatable
 
 extension Manufacturer: Equatable { }
-extension Manufacturer.Group: Equatable { }
 
 /// Explicit implementation of the equals operator for Manufacturer.
 /// Needed because the some of its variants have associated values.
@@ -257,26 +217,8 @@ public func ==(lhs: Manufacturer, rhs: Manufacturer) -> Bool {
         return lhsByteTriplet.0 == rhsByteTriplet.0 &&
                lhsByteTriplet.1 == rhsByteTriplet.1 &&
                lhsByteTriplet.2 == rhsByteTriplet.2
-    case (.development, .development):
-        return true
     default:
         return false
-    }
-}
-
-extension Manufacturer.Group: CustomStringConvertible {
-    /// Gets a printable string representation of the manufacturer group.
-    public var description: String {
-        switch self {
-        case .northAmerican:
-            return "North American"
-        case .japanese:
-            return "Japanese"
-        case .europeanAndOther:
-            return "European & Other"
-        case .development:
-            return ""
-        }
     }
 }
 
@@ -290,8 +232,6 @@ extension Manufacturer: CustomStringConvertible {
             result += String(format: "%02X", b)
         case .extended(let bs):
             result += String(format: "%02X %02X %02X", bs.0, bs.1, bs.2)
-        case .development:
-            return String(format: "%02X", Manufacturer.developmentIdentifierByte)
         }
 
         result += ")"
@@ -312,8 +252,6 @@ extension Manufacturer: SystemExclusiveData {
             result.append(bs.0)
             result.append(bs.1)
             result.append(bs.2)
-        case .development:
-            result.append(Manufacturer.developmentIdentifierByte)
         }
         return result
     }

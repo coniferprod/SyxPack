@@ -1,4 +1,4 @@
-import Foundation
+import ByteKit
 
 /// Represents a Universal System Exclusive Message.
 public enum Universal: Equatable {
@@ -54,19 +54,15 @@ extension Message {
             return Universal.Header(deviceChannel: data[2], subId1: data[3], subId2: data[4])
         }
         
-        guard data.count >= Message.minimumByteCount else {
-            return nil
-        }
-        guard data.first == Message.initiator else {
-            return nil
-        }
-        guard data.last == Message.terminator else {
+        guard 
+            data.count >= Message.minimumByteCount,
+            data.first == Message.initiator,
+            data.last == Message.terminator
+        else {
             return nil
         }
         
         switch data[1] {
-        case Manufacturer.developmentIdentifierByte:
-            self = .manufacturerSpecific(.development, getPayload())
         case Universal.Kind.nonRealTimeIdentifier:
             self = .universal(.nonRealTime, getHeader(), getPayload(startIndex: 4))
         case Universal.Kind.realTimeIdentifier:
