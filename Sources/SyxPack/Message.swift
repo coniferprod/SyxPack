@@ -1,5 +1,28 @@
 import ByteKit
 
+/// Error type for parsing data from MIDI System Exclusive bytes.
+public enum ParseError: Error {
+    case badFormat
+    case unknownKind
+    case invalidManufacturer
+    case invalidData(Int)  // offset
+}
+
+extension ParseError: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .badFormat:
+            return "Bad message format"
+        case .unknownKind:
+            return "Unknown message kind"
+        case .invalidManufacturer:
+            return "Invalid manufacturer identifier"
+        case .invalidData(let offset):
+            return "Invalid data at offset \(offset)."
+        }
+    }
+}
+
 /// Represents a Universal System Exclusive Message.
 public enum Universal: Equatable {
     /// The kind of the universal message.
@@ -41,10 +64,18 @@ public enum Message {
 }
 
 extension Message {
-    /// Initializes a message from the System Exclusive data bytes.
-    /// Returns an instance if the data contents comprise a valid message,
-    /// `nil` otherwise.
-    public init?(data: ByteArray) {
+    /// Gets the payload of the message.
+    public var payload: Payload {
+        switch self {
+        case .manufacturerSpecific(_, let data):
+            return data
+        case .universal(_, _, let data):
+            return data
+        }
+    }
+    
+    /// Parses the message from MIDI System Exclusive bytes,
+    public static func parse(from data: ByteArray) -> Result<Message, ParseError> {
         func getPayload(startIndex: Int = 2) -> Payload {
             let endIndex = data.count - 1
             return Payload(data[startIndex..<endIndex])
@@ -54,36 +85,41 @@ extension Message {
             return Universal.Header(deviceChannel: data[2], subId1: data[3], subId2: data[4])
         }
         
-        guard 
-            data.count >= Message.minimumByteCount,
-            data.first == Message.initiator,
-            data.last == Message.terminator
+        guard
+            data.count >= Message.minimumByteCount
         else {
-            return nil
+            print("Not enough bytes to be a System Exclusive message")
+            return .failure(.invalidData(0))
         }
         
-        switch data[1] {
-        case Universal.Kind.nonRealTimeIdentifier:
-            self = .universal(.nonRealTime, getHeader(), getPayload(startIndex: 4))
-        case Universal.Kind.realTimeIdentifier:
-            self = .universal(.realTime, getHeader(), getPayload(startIndex: 4))
-        case Manufacturer.extendedIdentifierFirstByte:
-            self = .manufacturerSpecific(
-                Manufacturer.extended((data[1], data[2], data[3])),
-                getPayload(startIndex: 4))
-        default:
-            self = .manufacturerSpecific(Manufacturer.standard(data[1]), getPayload())
+        guard
+            data.first == Message.initiator
+        else {
+            print("First byte is \(String(format: "%02X", data.first!))H, not System Exclusive initiator")
+            return .failure(.badFormat)
         }
-    }
-    
-    /// Gets the payload of the message.
-    public var payload: Payload {
-        switch self {
-        case .manufacturerSpecific(_, let data):
-            return data
-        case .universal(_, _, let data):
-            return data
+        
+        guard
+            data.last == Message.terminator
+        else {
+            print("Last byte is \(String(format: "%02X", data.last!))H, not System Exclusive terminator")
+            return .failure(.badFormat)
         }
+        
+        let temp: Message = switch data[1] {
+            case Universal.Kind.nonRealTimeIdentifier:
+                .universal(.nonRealTime, getHeader(), getPayload(startIndex: 4))
+            case Universal.Kind.realTimeIdentifier:
+                .universal(.realTime, getHeader(), getPayload(startIndex: 4))
+            case Manufacturer.extendedIdentifierFirstByte:
+                .manufacturerSpecific(
+                    Manufacturer.extended((data[1], data[2], data[3])),
+                    getPayload(startIndex: 4))
+            default:
+                .manufacturerSpecific(Manufacturer.standard(data[1]), getPayload())
+        }
+        
+        return .success(temp)
     }
 }
 

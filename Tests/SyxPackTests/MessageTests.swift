@@ -24,24 +24,34 @@ final class MessageTests: XCTestCase {
     ]
     
     func test_message_initFromBytes_standard() {
-        let message = Message(data: standardManufacturerMessageBytes)
-        XCTAssertNotNil(message)
+        if case let .failure(error) = Message.parse(from: standardManufacturerMessageBytes) {
+            XCTFail("Unable to parse message, error = \(error)")
+        }
     }
 
     func test_message_initFromBytes_extended() {
-        let message = Message(data: extendedManufacturerMessageBytes)
-        XCTAssertNotNil(message)
+        if case let .failure(error) = Message.parse(from: extendedManufacturerMessageBytes) {
+            XCTFail("Unable to parse message, error = \(error)")
+        }
     }
     
     func test_message_payload_standard() {
-        let message = Message(data: standardManufacturerMessageBytes)!
-        let payload = message.payload
-        XCTAssertEqual(payload.count, 6)
+        switch Message.parse(from: standardManufacturerMessageBytes) {
+        case .success(let message):
+            let payload = message.payload
+            XCTAssertEqual(payload.count, 6)
+        case .failure(let error):
+            XCTFail("Unable to parse message, error = \(error)")
+        }
     }
     
     func test_message_payload_extended() {
-        let message = Message(data: extendedManufacturerMessageBytes)!
-        let payload = message.payload
-        XCTAssertEqual(payload.count, 6)
+        switch Message.parse(from: extendedManufacturerMessageBytes) {
+        case .success(let message):
+            let payload = message.payload
+            XCTAssertEqual(payload.count, 6)
+        case .failure(let error):
+            XCTFail("Unable to parse message, error = \(error)")
+        }
     }
 }
