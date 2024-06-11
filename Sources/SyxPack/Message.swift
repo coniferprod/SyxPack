@@ -4,24 +4,33 @@ import ByteKit
 public enum ParseError: Error {
     case badFormat
     case unknownKind
-    case invalidManufacturer
+    case invalidManufacturer(ByteArray)
     case invalidData(Int)  // offset
 }
 
 extension ParseError: CustomStringConvertible {
+    /// Gets a printable representation of the error.
     public var description: String {
         switch self {
         case .badFormat:
             return "Bad message format"
         case .unknownKind:
             return "Unknown message kind"
-        case .invalidManufacturer:
-            return "Invalid manufacturer identifier"
+        case .invalidManufacturer(let bytes):
+            let shortDump = HexDumpConfiguration(
+                bytesPerLine: 8,
+                uppercased: true,
+                includeOptions: []
+            )
+            let dumpString = bytes.hexDump(configuration: shortDump)
+            return "Invalid manufacturer identifier: '\(dumpString)'"
         case .invalidData(let offset):
             return "Invalid data at offset \(offset)."
         }
     }
 }
+
+extension ParseError: Equatable { }
 
 /// Represents a Universal System Exclusive Message.
 public enum Universal: Equatable {
@@ -74,13 +83,15 @@ extension Message {
         }
     }
     
-    /// Parses the message from MIDI System Exclusive bytes,
+    /// Parses the message from MIDI System Exclusive bytes.
     public static func parse(from data: ByteArray) -> Result<Message, ParseError> {
+        // Gets the payload of the message, starting after universal or manufacturer.
         func getPayload(startIndex: Int = 2) -> Payload {
             let endIndex = data.count - 1
             return Payload(data[startIndex..<endIndex])
         }
         
+        // Gets the header for universal SysEx.
         func getHeader() -> Universal.Header {
             return Universal.Header(deviceChannel: data[2], subId1: data[3], subId2: data[4])
         }
@@ -106,17 +117,27 @@ extension Message {
             return .failure(.badFormat)
         }
         
-        let temp: Message = switch data[1] {
-            case Universal.Kind.nonRealTimeIdentifier:
-                .universal(.nonRealTime, getHeader(), getPayload(startIndex: 4))
-            case Universal.Kind.realTimeIdentifier:
-                .universal(.realTime, getHeader(), getPayload(startIndex: 4))
-            case Manufacturer.extendedIdentifierFirstByte:
-                .manufacturerSpecific(
-                    Manufacturer.extended((data[1], data[2], data[3])),
-                    getPayload(startIndex: 4))
-            default:
-                .manufacturerSpecific(Manufacturer.standard(data[1]), getPayload())
+        let temp: Message
+
+        switch data[1] {
+        case Universal.Kind.nonRealTimeIdentifier:
+            temp = .universal(.nonRealTime, getHeader(), getPayload(startIndex: 4))
+        case Universal.Kind.realTimeIdentifier:
+            temp = .universal(.realTime, getHeader(), getPayload(startIndex: 4))
+        case Manufacturer.extendedIdentifierFirstByte:
+            switch Manufacturer.parse(from: ByteArray(data.suffix(from: 1))) {
+            case .success(let manufacturer):
+                temp = .manufacturerSpecific(manufacturer, getPayload(startIndex: 4))
+            case .failure(let error):
+                return .failure(error)
+            }
+        default:
+            switch Manufacturer.parse(from: ByteArray(data.suffix(from: 1))) {
+            case .success(let manufacturer):
+                temp = .manufacturerSpecific(manufacturer, getPayload())
+            case .failure(let error):
+                return .failure(error)
+            }
         }
         
         return .success(temp)
@@ -158,9 +179,9 @@ extension Message: SystemExclusiveData {
         return self.collectData()
     }
 
+    /// Gets the length of the message in bytes.
     public var dataLength: Int {
-        let data = self.collectData()
-        return data.count
+        return self.collectData().count
     }
 }
 

@@ -1,18 +1,15 @@
 import ByteKit
 
-/// Byte triplet to represent extended manufacturer identifiers.
-public typealias ByteTriplet = (Byte, Byte, Byte)
-
 /// Represents a MIDI equipment manufacturer.
 public enum Manufacturer {
+    case standard(Byte)
+    case extended(Byte, Byte)  // first byte of three is always zero
+
     /// Identifier byte for development/non-commercial
     public static let developmentIdentifierByte: Byte = 0x7D
     
     /// First byte of extended manufacturer identifier triplet
     public static let extendedIdentifierFirstByte: Byte = 0x00
-
-    case standard(Byte)
-    case extended(ByteTriplet)
 
     /// Predefined manufacturer identifier for Kawai.
     public static let kawai = Manufacturer.standard(0x40)
@@ -27,20 +24,16 @@ public enum Manufacturer {
     public static let yamaha = Manufacturer.standard(0x43)
 
     /// Predefined manufacturer identifier for Alesis.
-    public static let alesis = Manufacturer.extended((0x00, 0x00, 0x0E))
+    public static let alesis = Manufacturer.extended(0x00, 0x0E)
     
     /// Gets the bytes of the manufacturer identifier.
     public var identifier: ByteArray {
-        var result = ByteArray()
         switch self {
         case .standard(let b):
-            result.append(b)
-        case .extended(let bs):
-            result.append(bs.0)
-            result.append(bs.1)
-            result.append(bs.2)
+            return [b]
+        case .extended(let b1, let b2):
+            return [0x00, b1, b2]
         }
-        return result
     }
 
     /// Gets the manufacturer name.
@@ -51,8 +44,8 @@ public enum Manufacturer {
             if let nameString = Manufacturer.allNames[idString] {
                 return nameString
             }
-        case .extended(let bs):
-            let idString = String(format: "%02X%02X%02X", bs.0, bs.1, bs.2)
+        case .extended(let b1, let b2):
+            let idString = String(format: "%02X%02X%02X", 0x00, b1, b2)
             if let nameString = Manufacturer.allNames[idString] {
                 return nameString
             }
@@ -60,7 +53,14 @@ public enum Manufacturer {
         return "(unknown)"
     }
     
-    private static let allNames: [String : String] = [
+    /// Returns the count of manufacturers currently known to SyxPack.
+    /// Does not reflect the actual number of registered manufacturers.
+    public static var count: Int {
+        return Manufacturer.allNames.keys.count
+    }
+    
+    // From https://midi.org/sysexidtable
+    private static let allNames: [String: String] = [
         "01": "Sequential Circuits",
         "02": "IDP",
         "03": "Voyetra Turtle Beach, Inc.",
@@ -146,7 +146,144 @@ public enum Manufacturer {
         "000013": "Temporal Acuity Products",
         "000014": "Perfect Fretworks",
         "000015": "KAT Inc.",
-
+        "000016": "Opcode Systems",
+        "000017": "Rane Corporation",
+        "000018": "Anadi Electronique",
+        "000019": "KMX",
+        "00001A": "Allen & Heath Brenell",
+        "00001B": "Peavey Electronics",
+        "00001C": "360 Systems",
+        "00001D": "Spectrum Design and Development",
+        "00001E": "Marquis Music",
+        "00001F": "Zeta Systems",
+        "000020": "Axxes (Brian Parsonett)",
+        "000021": "Orban",
+        "000022": "Indian Valley Mfg.",
+        "000023": "Triton",
+        "000024": "KTI",
+        "000025": "Breakway Technologies",
+        "000026": "Leprecon / CAE Inc.",
+        "000027": "Harrison Systems Inc.",
+        "000028": "Future Lab/Mark Kuo",
+        "000029": "Rocktron Corporation",
+        "00002A": "PianoDisc",
+        "00002B": "Cannon Research Group",
+        "00002C": "Reserved",
+        "00002D": "Rodgers Instrument LLC",
+        "00002E": "Blue Sky Logic",
+        "00002F": "Encore Electronics",
+        "000030": "Uptown",
+        "000031": "Voce",
+        "000032": "CTI Audio, Inc. (Musically Intel. Devs.)",
+        "000033": "S3 Incorporated",
+        "000034": "Broderbund / Red Orb",
+        "000035": "Allen Organ Co.",
+        "000036": "Reserved",
+        "000037": "Music Quest",
+        "000038": "Aphex",
+        "000039": "Gallien Krueger",
+        "00003A": "IBM",
+        "00003B": "Mark Of The Unicorn",
+        "00003C": "Hotz Corporation",
+        "00003D": "ETA Lighting",
+        "00003E": "NSI Corporation",
+        "00003F": "Ad Lib, Inc.",
+        "000040": "Richmond Sound Design",
+        "000041": "Microsoft",
+        "000042": "Mindscape (Software Toolworks)",
+        "000043": "Russ Jones Marketing / Niche",
+        "000044": "Intone",
+        "000045": "Advanced Remote Technologies",
+        "000046": "White Instruments",
+        "000047": "GT Electronics/Groove Tubes",
+        "000048": "Pacific Research & Engineering",
+        "000049": "Timeline Vista, Inc.",
+        "00004A": "Mesa Boogie Ltd.",
+        "00004B": "FSLI",
+        "00004C": "Sequoia Development Group",
+        "00004D": "Studio Electronics",
+        "00004E": "Euphonix, Inc",
+        "00004F": "InterMIDI, Inc.",
+        "000050": "MIDI Solutions Inc.",
+        "000051": "3DO Company",
+        "000052": "Lightwave Research / High End Systems",
+        "000053": "Micro-W Corporation",
+        "000054": "Spectral Synthesis, Inc.",
+        "000055": "Lone Wolf",
+        "000056": "Studio Technologies Inc.",
+        "000057": "Peterson Electro-Musical Product, Inc.",
+        "000058": "Atari Corporation",
+        "000059": "Marion Systems Corporation",
+        "00005A": "Design Event",
+        "00005B": "Winjammer Software Ltd.",
+        "00005C": "AT&T Bell Laboratories",
+        "00005D": "Reserved",
+        "00005E": "Symetrix",
+        "00005F": "MIDI the World",
+        "000060": "Spatializer",
+        "000061": "Micros ‘N MIDI",
+        "000062": "Accordians International",
+        "000063": "EuPhonics (now 3Com)",
+        "000064": "Musonix",
+        "000065": "Turtle Beach Systems (Voyetra)",
+        "000066": "Loud Technologies / Mackie",
+        "000067": "Compuserve",
+        "000068": "BEC Technologies",
+        "000069": "QRS Music Inc",
+        "00006A": "P.G. Music",
+        "00006B": "Sierra Semiconductor",
+        "00006C": "EpiGraf",
+        "00006D": "Electronics Diversified Inc",
+        "00006E": "Tune 1000",
+        "00006F": "Advanced Micro Devices",
+        "000070": "Mediamation",
+        "000071": "Sabine Musical Mfg. Co. Inc.",
+        "000072": "Woog Labs",
+        "000073": "Micropolis Corp",
+        "000074": "Ta Horng Musical Instrument",
+        "000075": "e-Tek Labs (Forte Tech)",
+        "000076": "Electro-Voice",
+        "000077": "Midisoft Corporation",
+        "000078": "QSound Labs",
+        "000079": "Westrex",
+        "00007A": "Nvidia",
+        "00007B": "ESS Technology",
+        "00007C": "Media Trix Peripherals",
+        "00007D": "Brooktree Corp",
+        "00007E": "Otari Corp",
+        "00007F": "Key Electronics, Inc.",
+        "000100": "Shure Incorporated",
+        "000101": "AuraSound",
+        "000102": "Crystal Semiconductor",
+        "000103": "Conexant (Rockwell)",
+        "000104": "Silicon Graphics",
+        "000105": "M-Audio (Midiman)",
+        "000106": "PreSonus",
+        "000108": "Topaz Enterprises",
+        "000109": "Cast Lighting",
+        "00010A": "Microsoft Consumer Division",
+        "00010B": "Sonic Foundry",
+        "00010C": "Line 6 (Fast Forward) (Yamaha)",
+        "00010D": "Beatnik Inc",
+        "00010E": "Van Koevering Company",
+        "00010F": "Altech Systems",
+        "000110": "S & S Research",
+        "000111": "VLSI Technology",
+        "000112": "Chromatic Research",
+        "000113": "Sapphire",
+        "000114": "IDRC",
+        "000115": "Justonic Tuning",
+        "000116": "TorComp Research Inc.",
+        "000117": "Newtek Inc.",
+        "000118": "Sound Sculpture",
+        "000119": "Walker Technical",
+        "00011A": "Digital Harmony (PAVO)",
+        "00011B": "InVision Interactive",
+        "00011C": "T-Square Design",
+        "00011D": "Nemesys Music Technology",
+        "00011E": "DBX Professional (Harman Intl)",
+        "00011F": "Syndyne Corporation",
+        
         // European & Other Group
         "002000": "Dream SAS",
         "002001": "Strand Lighting",
@@ -161,8 +298,37 @@ public enum Manufacturer {
         "00200A": "Audiomatica",
         "00200B": "Bontempi SpA (Sigma)",
         "00200C": "F.B.T. Elettronica SpA",
+        "00200D": "MidiTemp GmbH",
+        "00200E": "LA Audio (Larking Audio)",
+        "00200F": "Zero 88 Lighting Limited",
+        "002010": "Micon Audio Electronics GmbH",
+        "002011": "Forefront Technology",
+        "002012": "Studio Audio and Video Ltd.",
+        "002013": "Kenton Electronics",
+
+        "00201F": "TC Electronics",
+        "002020": "Doepfer Musikelektronik GmbH",
+        "002021": "Creative ATC / E-mu",
 
         "002029": "Focusrite/Novation",
+
+        "002032": "Behringer GmbH",
+        "002033": "Access Music Electronics",
+
+        "00203A": "Propellerhead Software",
+
+        "00206B": "Arturia",
+        "002076": "Teenage Engineering",
+
+        "002103": "PreSonus Software Ltd",
+
+        "002109": "Native Instruments",
+
+        "002110": "ROLI Ltd",
+
+        "00211A": "IK Multimedia",
+
+        "00211D": "Ableton",
 
         "40": "Kawai Musical Instruments MFG. CO. Ltd",
         "41": "Roland Corporation",
@@ -203,6 +369,21 @@ public enum Manufacturer {
     ]
 }
 
+extension Manufacturer {
+    /// Parses the manufacturer from MIDI System Exclusive bytes.
+    public static func parse(from data: ByteArray) -> Result<Manufacturer, ParseError> {
+        let firstByte = data.first!
+        switch firstByte {
+        case extendedIdentifierFirstByte:
+            return .success(.extended(data[1], data[2]))
+        case 0x01...developmentIdentifierByte:
+            return .success(.standard(firstByte))
+        default:
+            return .failure(.invalidManufacturer([firstByte]))
+        }
+    }
+}
+
 // MARK: - Equatable
 
 extension Manufacturer: Equatable { }
@@ -213,10 +394,8 @@ public func ==(lhs: Manufacturer, rhs: Manufacturer) -> Bool {
     switch (lhs, rhs) {
     case (let .standard(lhsByte), let .standard(rhsByte)):
         return lhsByte == rhsByte
-    case (let .extended(lhsByteTriplet), let .extended(rhsByteTriplet)):
-        return lhsByteTriplet.0 == rhsByteTriplet.0 &&
-               lhsByteTriplet.1 == rhsByteTriplet.1 &&
-               lhsByteTriplet.2 == rhsByteTriplet.2
+    case (let .extended(lhsb1, lhsb2), let .extended(rhsb1, rhsb2)):
+        return lhsb1 == rhsb1 && lhsb2 == rhsb2
     default:
         return false
     }
@@ -230,8 +409,8 @@ extension Manufacturer: CustomStringConvertible {
         switch self {
         case .standard(let b):
             result += String(format: "%02X", b)
-        case .extended(let bs):
-            result += String(format: "%02X %02X %02X", bs.0, bs.1, bs.2)
+        case .extended(let b1, let b2):
+            result += String(format: "%02X %02X %02X", 0x00, b1, b2)
         }
 
         result += ")"
@@ -243,25 +422,13 @@ extension Manufacturer: CustomStringConvertible {
 // MARK: - SystemExclusiveData implementation
 
 extension Manufacturer: SystemExclusiveData {
+    /// Gets the manufacturer data as bytes.
     public func asData() -> ByteArray {
-        var result = ByteArray()
-        switch self {
-        case .standard(let b):
-            result.append(b)
-        case .extended(let bs):
-            result.append(bs.0)
-            result.append(bs.1)
-            result.append(bs.2)
-        }
-        return result
+        self.identifier
     }
     
+    /// Gets the length of the manufacturer data as bytes.
     public var dataLength: Int {
-        switch self {
-        case .extended( _):
-            return 3
-        default:
-            return 1
-        }
+        self.identifier.count
     }
 }
