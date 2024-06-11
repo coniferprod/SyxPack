@@ -20,8 +20,8 @@ final class ManufacturerTests: XCTestCase {
     }
     
     func test_invalidManufacturer() {
-        let result = Manufacturer.parse(from: [0x7E, 0x7F])
-        XCTAssertEqual(result, .failure(.invalidManufacturer([0x7E])))
+        let result = Manufacturer.parse(from: [0x60])
+        XCTAssertEqual(result, .failure(.invalidManufacturer([0x60])))
     }
     
     func test_unknownManufacturer() {
