@@ -6,10 +6,10 @@ public enum Manufacturer {
     case extended(Byte, Byte)  // first byte of three is always zero
 
     /// Identifier byte for development/non-commercial
-    public static let developmentIdentifierByte: Byte = 0x7D
+    static let developmentIdentifierByte: Byte = 0x7D
     
     /// First byte of extended manufacturer identifier triplet
-    public static let extendedIdentifierFirstByte: Byte = 0x00
+    static let extendedIdentifierFirstByte: Byte = 0x00
 
     /// Predefined manufacturer identifier for Kawai.
     public static let kawai = Manufacturer.standard(0x40)
@@ -753,6 +753,12 @@ public enum Manufacturer {
 extension Manufacturer {
     /// Parses the manufacturer from MIDI System Exclusive bytes.
     public static func parse(from data: ByteArray) -> Result<Manufacturer, ParseError> {
+        guard
+            data.count > 0
+        else {
+            return .failure(.badFormat)
+        }
+        
         let firstByte = data.first!
         switch firstByte {
         case extendedIdentifierFirstByte:
@@ -783,7 +789,8 @@ public func ==(lhs: Manufacturer, rhs: Manufacturer) -> Bool {
 }
 
 extension Manufacturer: CustomStringConvertible {
-    /// Gets a printable string representation of the manufacturer, including the identifier in hexadecimal numbers.
+    /// Gets a printable string representation of the manufacturer, 
+    /// including the identifier in hexadecimal format.
     public var description: String {
         var result = self.name + " ("
         
